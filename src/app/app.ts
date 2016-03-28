@@ -2,10 +2,20 @@
  * Angular 2 decorators and services
  */
 import {Component} from 'angular2/core';
-import {RouteConfig, Router} from 'angular2/router';
+import { Store } from '@ngrx/store';
+import { Devtools } from '@ngrx/devtools';
 
-import {Home} from './home';
-import {AppState} from './app.service';
+export function reducer(count = 0, action) {
+  console.log('received new count', count)
+  switch(action.type) {
+    case 'ADD':
+      return count + 1;
+    case 'SUBTRACT':
+      return count - 1;
+    default:
+      return count;
+  }
+}
 
 /*
  * App Component
@@ -15,75 +25,34 @@ import {AppState} from './app.service';
   selector: 'app',
   pipes: [ ],
   providers: [ ],
-  directives: [ ],
+  directives: [ Devtools ],
   styles: [`
-    nav ul {
-      display: inline;
-      list-style-type: none;
-      margin: 0;
-      padding: 0;
-      width: 60px;
-    }
-    nav li {
-      display: inline;
-    }
-    nav li.active {
-      background-color: lightgray;
+    :host {
+
     }
   `],
   template: `
-    <header>
-      <nav>
-        <h1>Hello {{ name }}</h1>
-        <ul>
-          <li router-active>
-            <a [routerLink]=" ['Index'] ">Index</a>
-          </li>
-          <li router-active>
-            <a [routerLink]=" ['Home'] ">Home</a>
-          </li>
-          <li router-active>
-            <a [routerLink]=" ['About'] ">About</a>
-          </li>
-        </ul>
-      </nav>
-    </header>
 
-    <main>
-      <router-outlet></router-outlet>
-    </main>
+    <span style="color:green;">Count {{ count$ | async }}</span>
 
-    <footer>
-      WebPack Angular 2 Starter by <a [href]="url">@AngularClass</a>
-      <div>
-        <img [src]="angularclassLogo" width="10%">
-      </div>
-    </footer>
+    <button (click)="add()">Add</button>
+    <button (click)="subtract()">Subtract</button>
 
-    <pre>this.state = {{ state | json }}</pre>
+    <ngrx-devtools></ngrx-devtools>
   `
 })
-@RouteConfig([
-  { path: '/',      name: 'Index', component: Home, useAsDefault: true },
-  { path: '/home',  name: 'Home',  component: Home },
-  // Async load a component using Webpack's require with es6-promise-loader and webpack `require`
-  { path: '/about', name: 'About', loader: () => require('es6-promise!./about')('About') },
-])
 export class App {
-  angularclassLogo = 'assets/img/angularclass-avatar.png';
-  name = 'Angular 2 Webpack Starter';
-  url = 'https://twitter.com/AngularClass';
+  constructor(private store: Store<{ count: number }>) { }
 
-  constructor(public appState: AppState) {}
+  count$ = this.store.select(s => s.count);
 
-  get state() {
-    return this.appState.get();
+  add() {
+    this.store.dispatch({ type: 'ADD' });
   }
 
-  ngOnInit() {
-    console.log('Initial App State', this.state);
+  subtract() {
+    this.store.dispatch({ type: 'SUBTRACT' });
   }
-
 }
 
 /*
